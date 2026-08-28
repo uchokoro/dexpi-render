@@ -3,20 +3,26 @@ from __future__ import annotations
 import base64
 
 from pathlib import Path
-from typing import cast, Literal
-from typing_extensions import Buffer
+from typing import Literal
 
 from pydexpi.loaders.svg_loader import DrawDiagram
 from pydexpi.dexpi_classes.dexpiModel import DexpiModel
 from weasyprint import HTML
 
-#from dexpi_model import DexpiModelProvider
 
-
-DrawingOutputFormat = Literal[
-    "JPG", "jpg", "JPEG", "jpeg", "PDF", "pdf", "SVG", "svg"
-]
+DrawingOutputFormat = Literal["pdf", "svg"]
 PageOrientation = Literal["portrait", "landscape"]
+
+PageSize = Literal[
+    "A0",
+    "A1",
+    "A2",
+    "A3",
+    "A4",
+    "A5",
+    "LETTER",
+    "LEGAL",
+]
 
 
 def _create_pid_drawer(
@@ -38,16 +44,20 @@ def _resolve_output_filepath(
     create_output_directory: bool = False,
 ) -> Path:
     if not isinstance(filepath, (str, Path)):
-        raise TypeError("'output_path' must be a `str` or a `Path`.")
+        raise TypeError("'filepath' must be a `str` or a `Path`.")
 
     filepath = Path(filepath)
+    expected_suffix = f".{output_format.lower()}"
 
-    if not filepath.suffix.lower() == f".{output_format.lower()}":
+    if filepath.suffix.lower() != expected_suffix:
         raise ValueError(
-            f"Output path must be a valid {output_format.lower()} filepath."
+            f"'filepath' must have a '.{output_format.lower()}' extension."
         )
 
-    if not create_output_directory and not filepath.parent.is_dir():
+    if filepath.parent.is_dir():
+        return filepath
+
+    if not create_output_directory:
         raise NotADirectoryError(
             "No directory corresponding to output path's parent found."
         )
@@ -58,18 +68,25 @@ def _resolve_output_filepath(
     return filepath
 
 
+def _build_page_size(
+    page_size: PageSize,
+    orientation: PageOrientation,
+) -> str:
+    return f"{page_size} {orientation}"
+
+
 def _wrap_svg_bytes_into_html(
     svg_bytes: bytes,
     *,
-    page_size: str = "A4",
+    page_size: PageSize = "A4",
     orientation: PageOrientation = "landscape",
 ) -> str:
     # Encode the SVG bytes to a base64 string
     svg_base64 = base64.b64encode(
-        cast(Buffer, svg_bytes)
+        svg_bytes
     ).decode('utf-8')
 
-    css_page_size = f"{page_size} {orientation}"
+    css_page_size = _build_page_size(page_size, orientation)
 
     return f"""
         <html>
@@ -116,6 +133,7 @@ def render_pid_as_svg(
     pretty_formatting: bool = False,
     add_background_box: bool = False,
 ) -> bytes:
+    """Render a DEXPI P&ID model as SVG data."""
     drawer = _create_pid_drawer(
         dexpi_model=dexpi_model,
         padding=padding,
@@ -133,9 +151,10 @@ def render_pid_as_svg(
 def convert_svg_bytes_to_pdf(
     svg_bytes: bytes,
     *,
-    page_size: str = "A4",
+    page_size: PageSize = "A4",
     orientation: PageOrientation = "landscape",
 ) -> bytes:
+    """Convert SVG data to PDF."""
     html_content = _wrap_svg_bytes_into_html(
         svg_bytes=svg_bytes,
         page_size=page_size,
@@ -155,6 +174,7 @@ def save_pid_as_svg(
     add_background_box: bool = False,
     create_output_directory: bool = False,
 ) -> Path:
+    """Render a DEXPI P&ID model as SVG data and save it to a file."""
     output_path: Path = _resolve_output_filepath(
         filepath=output_path,
         output_format="svg",
@@ -181,6 +201,7 @@ def save_svg_bytes_to_svg(
     *,
     create_output_directory: bool = False,
 ) -> Path:
+    """SVG data to an SVG file."""
     output_path = _resolve_output_filepath(
         filepath=output_path,
         output_format="svg",
@@ -188,7 +209,7 @@ def save_svg_bytes_to_svg(
     )
 
     output_path.write_bytes(
-        cast(Buffer, svg_bytes)
+        svg_bytes
     )
 
     return output_path
@@ -198,10 +219,11 @@ def save_svg_bytes_to_pdf(
     svg_bytes: bytes,
     output_path: str | Path,
     *,
-    page_size: str = "A4",
+    page_size: PageSize = "A4",
     orientation: PageOrientation = "landscape",
     create_output_directory: bool = False,
 ) -> Path:
+    """Convert SVG data to PDF and save it to a file."""
     output_path = _resolve_output_filepath(
         filepath=output_path,
         output_format="pdf",

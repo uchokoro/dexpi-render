@@ -11,7 +11,8 @@ class DexpiLoadError(Exception):
     """Raised when a DEXPI model cannot be loaded or parsed."""
 
 
-def load_dexpi(filepath: str | Path) -> DexpiModel:
+def load_dexpi_model(filepath: str | Path) -> DexpiModel:
+    """Load and parse a DEXPI P&ID model."""
     if not isinstance(filepath, (str, Path)):
         raise TypeError("'filepath' must be a `str` or `Path`")
 
@@ -108,19 +109,13 @@ class DexpiModelProvider:
         if not isinstance(filepath, (str, Path)):
             raise TypeError("'filepath' must be a `str` or `Path`")
 
-        filepath = (
-            Path(filepath)
-            .expanduser()
-            .resolve()
-        )
-
         if not reload:
             cached_model = self._cache.get(filepath)
 
             if cached_model is not None:
                 return cached_model
 
-        model = load_dexpi(filepath)
+        model = load_dexpi_model(filepath)
         self._cache.set(filepath, model)
 
         return model
