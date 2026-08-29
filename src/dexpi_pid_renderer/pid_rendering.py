@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import base64
-
 from pathlib import Path
-from typing import Literal
+from typing import Literal, cast
 
-from pydexpi.loaders.svg_loader import DrawDiagram
 from pydexpi.dexpi_classes.dexpiModel import DexpiModel
+from pydexpi.loaders.svg_loader import DrawDiagram
 from weasyprint import HTML
-
 
 DrawingOutputFormat = Literal["pdf", "svg"]
 PageOrientation = Literal["portrait", "landscape"]
@@ -62,7 +60,6 @@ def _resolve_output_filepath(
             "No directory corresponding to output path's parent found."
         )
 
-
     filepath.parent.mkdir(parents=True, exist_ok=True)
 
     return filepath
@@ -82,9 +79,7 @@ def _wrap_svg_bytes_into_html(
     orientation: PageOrientation = "landscape",
 ) -> str:
     # Encode the SVG bytes to a base64 string
-    svg_base64 = base64.b64encode(
-        svg_bytes
-    ).decode('utf-8')
+    svg_base64 = base64.b64encode(svg_bytes).decode("utf-8")
 
     css_page_size = _build_page_size(page_size, orientation)
 
@@ -96,7 +91,7 @@ def _wrap_svg_bytes_into_html(
                 size: {css_page_size};
                 margin: 0;
               }}
-              
+
               html,
               body {{
                 width: 100%;
@@ -104,13 +99,13 @@ def _wrap_svg_bytes_into_html(
                 margin: 0;
                 padding: 0;
               }}
-              
+
               body {{
                 display: flex;
                 justify-content: center;
                 align-items: center;
               }}
-              
+
               img {{
                 display: block;
                 width: 100%;
@@ -140,12 +135,9 @@ def render_pid_as_svg(
         pretty_formatting=pretty_formatting,
     )
 
-    svg_string = drawer.draw_svg(
-        return_element=False,
-        background=add_background_box
-    )
+    svg_string = drawer.draw_svg(return_element=False, background=add_background_box)
 
-    return svg_string.encode("utf-8")
+    return cast(bytes, svg_string.encode("utf-8"))
 
 
 def convert_svg_bytes_to_pdf(
@@ -153,7 +145,7 @@ def convert_svg_bytes_to_pdf(
     *,
     page_size: PageSize = "A4",
     orientation: PageOrientation = "landscape",
-) -> bytes:
+) -> bytes | None:
     """Convert SVG data to PDF."""
     html_content = _wrap_svg_bytes_into_html(
         svg_bytes=svg_bytes,
@@ -162,7 +154,7 @@ def convert_svg_bytes_to_pdf(
     )
     html_document = HTML(string=html_content)
 
-    return html_document.write_pdf()
+    return cast(bytes | None, html_document.write_pdf())
 
 
 def save_pid_as_svg(
@@ -175,7 +167,7 @@ def save_pid_as_svg(
     create_output_directory: bool = False,
 ) -> Path:
     """Render a DEXPI P&ID model as SVG data and save it to a file."""
-    output_path: Path = _resolve_output_filepath(
+    output_path = _resolve_output_filepath(
         filepath=output_path,
         output_format="svg",
         create_output_directory=create_output_directory,
@@ -208,9 +200,7 @@ def save_svg_bytes_to_svg(
         create_output_directory=create_output_directory,
     )
 
-    output_path.write_bytes(
-        svg_bytes
-    )
+    output_path.write_bytes(svg_bytes)
 
     return output_path
 

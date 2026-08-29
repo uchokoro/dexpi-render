@@ -1,14 +1,14 @@
 import os
-
 from pathlib import Path
 
 try:
     from dotenv import find_dotenv, load_dotenv
+
     _ = load_dotenv(find_dotenv())
 except ImportError:
     # Fall back to standard OS environment variables if python-dotenv isn't installed
-    find_dotenv = None  # type: ignore[assignment]
-    load_dotenv = None  # type: ignore[assignment]
+    find_dotenv = None
+    load_dotenv = None
 
 from dexpi_pid_renderer import (
     DrawingOutputFormat,
@@ -18,7 +18,7 @@ from dexpi_pid_renderer import (
 )
 
 
-def main():
+def main() -> None:
     dexpi_filepath = os.getenv("DEXPI_FILEPATH")
     drawing_output_dir = os.getenv("DRAWING_OUTPUT_DIR")
 
@@ -43,10 +43,7 @@ def main():
         pretty_formatting=True,
         add_background_box=True,
     )
-    print(
-        f"P&ID from '{dexpi_filepath}' has been exported "
-        f"to '{saved_filepath}'."
-    )
+    print(f"P&ID from '{dexpi_filepath}' has been exported to '{saved_filepath}'.")
 
 
 if __name__ == "__main__":

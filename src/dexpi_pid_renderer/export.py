@@ -33,8 +33,6 @@ def export_dexpi_to_drawing_file(
     provider = provider or DexpiModelProvider()
     dexpi_model = provider.get(filepath=filepath)
 
-    output_format = output_format.lower()
-
     if output_format == "svg":
         return save_pid_as_svg(
             dexpi_model=dexpi_model,
@@ -61,6 +59,4 @@ def export_dexpi_to_drawing_file(
             create_output_directory=create_output_directory,
         )
 
-    raise ValueError(
-        f"Unsupported drawing output format: {output_format!r}"
-    )
+    raise ValueError(f"Unsupported drawing output format: {output_format!r}")
