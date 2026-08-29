@@ -2,12 +2,10 @@ from __future__ import annotations
 
 import argparse
 import sys
-
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Sequence
 
 from .export import export_dexpi_to_drawing_file
-
 
 __version__ = "0.1.0"
 

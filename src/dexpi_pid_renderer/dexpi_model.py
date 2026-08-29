@@ -16,33 +16,19 @@ def load_dexpi_model(filepath: str | Path) -> DexpiModel:
     if not isinstance(filepath, (str, Path)):
         raise TypeError("'filepath' must be a `str` or `Path`")
 
-    filepath = (
-        Path(filepath)
-        .expanduser()
-        .resolve()
-    )
+    filepath = Path(filepath).expanduser().resolve()
 
     if filepath.suffix.lower() != ".xml":
         raise ValueError("'filepath' must be a .xml file")
 
     if not filepath.is_file():
-        raise FileNotFoundError(
-            f"The file, '{filepath}', does not exist"
-        )
+        raise FileNotFoundError(f"The file, '{filepath}', does not exist")
 
     model_serializer = ProteusSerializer()
 
     try:
-        model: DexpiModel = model_serializer.load(
-            filepath.parent,
-            filepath.name
-        )
-    except (
-            ElementTree.ParseError,
-            ValueError,
-            AttributeError,
-            KeyError
-    ) as exc:
+        model: DexpiModel = model_serializer.load(filepath.parent, filepath.name)
+    except (ElementTree.ParseError, ValueError, AttributeError, KeyError) as exc:
         raise DexpiLoadError(
             f"Failed to parse or validate DEXPI file structure: {exc}"
         ) from exc
@@ -61,20 +47,13 @@ class DexpiModelCache:
         return Path(path).expanduser().resolve()
 
     def get(self, path: str | Path) -> DexpiModel | None:
-        return self._models.get(
-            self._normalize_path(path)
-        )
+        return self._models.get(self._normalize_path(path))
 
     def set(self, path: str | Path, model: DexpiModel) -> None:
-        self._models[
-            self._normalize_path(path)
-        ] = model
+        self._models[self._normalize_path(path)] = model
 
     def remove(self, path: str | Path) -> None:
-        self._models.pop(
-            self._normalize_path(path),
-            None
-        )
+        self._models.pop(self._normalize_path(path), None)
 
     def clear(self) -> None:
         self._models.clear()
@@ -94,11 +73,7 @@ class DexpiModelProvider:
     """Provides DEXPI models using an in-memory path-keyed cache."""
 
     def __init__(self, cache: DexpiModelCache | None = None) -> None:
-        self._cache = (
-            cache
-            if cache is not None
-            else DexpiModelCache()
-        )
+        self._cache = cache if cache is not None else DexpiModelCache()
 
     def get(
         self,
