@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from dexpi_model import DexpiModelProvider
-from pid_rendering import (
+from .dexpi_model import DexpiModelProvider
+from .pid_rendering import (
     DrawingOutputFormat,
     PageOrientation,
     PageSize,
