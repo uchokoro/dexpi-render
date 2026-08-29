@@ -2,18 +2,23 @@ import os
 
 from pathlib import Path
 
-from dotenv import find_dotenv, load_dotenv
+try:
+    from dotenv import find_dotenv, load_dotenv
+    _ = load_dotenv(find_dotenv())
+except ImportError:
+    # Fall back to standard OS environment variables if python-dotenv isn't installed
+    find_dotenv = None  # type: ignore[assignment]
+    load_dotenv = None  # type: ignore[assignment]
 
-from export import export_dexpi_to_drawing_file
-from pid_rendering import (
+from dexpi_pid_renderer import (
     DrawingOutputFormat,
     PageOrientation,
     PageSize,
+    export_dexpi_to_drawing_file,
 )
 
 
 def main():
-    _ = load_dotenv(find_dotenv())
     dexpi_filepath = os.getenv("DEXPI_FILEPATH")
     drawing_output_dir = os.getenv("DRAWING_OUTPUT_DIR")
 
