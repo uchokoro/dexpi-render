@@ -38,3 +38,4 @@ repos:
           - pydexpi>=1.2,<2
           - weasyprint>=69,<70
           - pytest>=9,<10
+          - python-dotenv
