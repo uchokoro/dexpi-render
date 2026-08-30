@@ -16,7 +16,9 @@ authors = [
 ]
 
 dependencies = [
+    "pydantic>=2.13,<3",
     "pydexpi>=1.2,<2",
+    "pymupdf>=1.28,<2",
     "weasyprint>=69,<70",
 ]
 
@@ -73,6 +75,7 @@ disallow_any_unimported = false
 [[tool.mypy.overrides]]
 module = [
     "pydexpi.*",
+    "pymupdf.*",
     "weasyprint.*",
 ]
 ignore_missing_imports = true

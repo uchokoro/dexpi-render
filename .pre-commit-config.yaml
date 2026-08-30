@@ -35,7 +35,9 @@ repos:
       - id: mypy
         args: [--config-file=pyproject.toml]
         additional_dependencies:
+          - pydantic>=2.13,<3
           - pydexpi>=1.2,<2
-          - weasyprint>=69,<70
+          - pymupdf>=1.28,<2
           - pytest>=9,<10
           - python-dotenv
+          - weasyprint>=69,<70

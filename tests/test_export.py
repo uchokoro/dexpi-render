@@ -2,29 +2,27 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Any
-from unittest.mock import MagicMock, patch
+from unittest.mock import ANY, MagicMock, patch
 
 import pytest
 
-from dexpi_pid_renderer.export import export_dexpi_to_drawing_file
+from dexpi_pid_renderer.export import (
+    FORMAT_TO_SAVER_MAP,
+    export_dexpi_to_drawing_file,
+)
 
 
 class TestExportDexpiToDrawingFile:
-    def test_export_svg(
-        self,
-        tmp_path: Path,
-    ) -> None:
-        """Exporting as SVG delegates to save_pid_as_svg."""
+    def test_export_svg(self, tmp_path: Path) -> None:
         input_filepath = tmp_path / "model.xml"
         output_filepath = tmp_path / "drawing.svg"
 
         mock_provider = MagicMock()
         mock_model = MagicMock()
         mock_provider.get.return_value = mock_model
+        mock_save_svg = MagicMock(return_value=output_filepath)
 
-        with patch("dexpi_pid_renderer.export.save_pid_as_svg") as mock_save_svg:
-            mock_save_svg.return_value = output_filepath
-
+        with patch.dict(FORMAT_TO_SAVER_MAP, {"svg": mock_save_svg}):
             result = export_dexpi_to_drawing_file(
                 filepath=input_filepath,
                 output_filepath=output_filepath,
@@ -33,14 +31,11 @@ class TestExportDexpiToDrawingFile:
                 pretty_formatting=True,
                 add_background_box=True,
                 create_output_directory=True,
-                provider=mock_provider,
+                dexpi_parser_provider=mock_provider,
             )
 
         assert result == output_filepath
-
-        mock_provider.get.assert_called_once_with(
-            filepath=input_filepath,
-        )
+        mock_provider.get.assert_called_once_with(filepath=input_filepath)
         mock_save_svg.assert_called_once_with(
             dexpi_model=mock_model,
             output_path=output_filepath,
@@ -48,6 +43,10 @@ class TestExportDexpiToDrawingFile:
             pretty_formatting=True,
             add_background_box=True,
             create_output_directory=True,
+            page_size=ANY,
+            orientation=ANY,
+            resolution_scaling_factor=ANY,
+            jpg_quality_factor=ANY,
         )
 
     def test_export_pdf(
@@ -64,8 +63,12 @@ class TestExportDexpiToDrawingFile:
         mock_provider.get.return_value = mock_model
 
         with (
-            patch("dexpi_pid_renderer.export.render_pid_as_svg") as mock_render_svg,
-            patch("dexpi_pid_renderer.export.save_svg_bytes_to_pdf") as mock_save_pdf,
+            patch(
+                "dexpi_pid_renderer.dexpi_to_image_file.render_pid_as_svg"
+            ) as mock_render_svg,
+            patch(
+                "dexpi_pid_renderer.dexpi_to_image_file.save_svg_bytes_to_pdf"
+            ) as mock_save_pdf,
         ):
             mock_render_svg.return_value = svg_data
             mock_save_pdf.return_value = output_filepath
@@ -80,7 +83,7 @@ class TestExportDexpiToDrawingFile:
                 page_size="A3",
                 orientation="portrait",
                 create_output_directory=True,
-                provider=mock_provider,
+                dexpi_parser_provider=mock_provider,
             )
 
         assert result == output_filepath
@@ -104,7 +107,7 @@ class TestExportDexpiToDrawingFile:
 
     @pytest.mark.parametrize(
         "output_format",
-        ["png", "jpg", "jpeg", "txt", ""],
+        ["doc", "xlsx", "json", "txt", ""],
     )
     def test_unsupported_output_format_raises_value_error(
         self,
@@ -127,7 +130,7 @@ class TestExportDexpiToDrawingFile:
                 filepath=input_filepath,
                 output_filepath=output_filepath,
                 output_format=drawing_file_format,
-                provider=mock_provider,
+                dexpi_parser_provider=mock_provider,
             )
 
     def test_default_provider_is_created(
@@ -139,15 +142,17 @@ class TestExportDexpiToDrawingFile:
         output_filepath = tmp_path / "drawing.svg"
 
         mock_model = MagicMock()
+        mock_save_svg = MagicMock(return_value=output_filepath)
 
         with (
             patch("dexpi_pid_renderer.export.DexpiModelProvider") as mock_provider_cls,
-            patch("dexpi_pid_renderer.export.save_pid_as_svg") as mock_save_svg,
+            patch.dict(
+                "dexpi_pid_renderer.export.FORMAT_TO_SAVER_MAP", {"svg": mock_save_svg}
+            ),
         ):
             mock_provider = MagicMock()
             mock_provider.get.return_value = mock_model
             mock_provider_cls.return_value = mock_provider
-            mock_save_svg.return_value = output_filepath
 
             result = export_dexpi_to_drawing_file(
                 filepath=input_filepath,
@@ -185,7 +190,7 @@ class TestExportDexpiToDrawingFile:
                 filepath=input_filepath,
                 output_filepath=output_filepath,
                 output_format="svg",
-                provider=mock_provider,
+                dexpi_parser_provider=mock_provider,
             )
 
         assert result == output_filepath

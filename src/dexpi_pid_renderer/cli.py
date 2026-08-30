@@ -14,7 +14,7 @@ def _build_parser() -> argparse.ArgumentParser:
     """Construct and return the command-line argument parser."""
     parser = argparse.ArgumentParser(
         prog="dexpi-render",
-        description="Render DEXPI P&ID models to SVG or PDF drawings.",
+        description="Render DEXPI P&ID models to SVG, PDF, PNG, or JPG drawings.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -36,7 +36,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "-f",
         "--format",
-        choices=["pdf", "svg"],
+        choices=["pdf", "svg", "png", "jpg", "jpeg"],
         default="pdf",
         dest="output_format",
         help="Target drawing format.",
@@ -53,14 +53,31 @@ def _build_parser() -> argparse.ArgumentParser:
         "--page-size",
         choices=["A0", "A1", "A2", "A3", "A4", "A5", "LETTER", "LEGAL"],
         default="A4",
-        help="Page size for PDF rendering.",
+        help="Page size for PDF and raster image rendering.",
     )
 
     parser.add_argument(
         "--orientation",
         choices=["landscape", "portrait"],
         default="landscape",
-        help="Page orientation for PDF rendering.",
+        help="Page orientation for PDF and raster image rendering.",
+    )
+
+    parser.add_argument(
+        "--resolution-scale",
+        type=int,
+        choices=[1, 2],
+        default=1,
+        dest="resolution_scaling_factor",
+        help="Resolution scaling factor for raster exports (PNG/JPG).",
+    )
+
+    parser.add_argument(
+        "--jpg-quality",
+        type=int,
+        default=100,
+        dest="jpg_quality_factor",
+        help="Quality factor (1-100) for JPG image exports.",
     )
 
     parser.add_argument(
@@ -113,6 +130,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             page_size=args.page_size,
             orientation=args.orientation,
             create_output_directory=args.create_output_directory,
+            resolution_scaling_factor=args.resolution_scaling_factor,
+            jpg_quality_factor=args.jpg_quality_factor,
         )
         print(f"Successfully exported drawing to: {saved_path}")
         return 0
