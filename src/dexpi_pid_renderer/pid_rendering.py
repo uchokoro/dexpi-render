@@ -4,11 +4,13 @@ import base64
 from pathlib import Path
 from typing import Literal, cast
 
+import pymupdf
+from pydantic import Field, validate_call
 from pydexpi.dexpi_classes.dexpiModel import DexpiModel
 from pydexpi.loaders.svg_loader import DrawDiagram
 from weasyprint import HTML
 
-DrawingOutputFormat = Literal["pdf", "svg"]
+DrawingOutputFormat = Literal["jpeg", "jpg", "pdf", "png", "svg"]
 PageOrientation = Literal["portrait", "landscape"]
 
 PageSize = Literal[
@@ -36,7 +38,7 @@ def _create_pid_drawer(
     )
 
 
-def _resolve_output_filepath(
+def resolve_output_filepath(
     filepath: str | Path,
     output_format: DrawingOutputFormat,
     create_output_directory: bool = False,
@@ -72,7 +74,7 @@ def _build_page_size(
     return f"{page_size} {orientation}"
 
 
-def _wrap_svg_bytes_into_html(
+def wrap_svg_bytes_into_html(
     svg_bytes: bytes,
     *,
     page_size: PageSize = "A4",
@@ -145,87 +147,42 @@ def convert_svg_bytes_to_pdf(
     *,
     page_size: PageSize = "A4",
     orientation: PageOrientation = "landscape",
-) -> bytes | None:
+) -> bytes:
     """Convert SVG data to PDF."""
-    html_content = _wrap_svg_bytes_into_html(
+    html_content = wrap_svg_bytes_into_html(
         svg_bytes=svg_bytes,
         page_size=page_size,
         orientation=orientation,
     )
     html_document = HTML(string=html_content)
+    pdf_bytes = html_document.write_pdf()
 
-    return cast(bytes | None, html_document.write_pdf())
+    if pdf_bytes is None:
+        raise RuntimeError("Error converting SVG data to PDF.")
+
+    return cast(bytes, pdf_bytes)
 
 
-def save_pid_as_svg(
+@validate_call
+def convert_pdf_bytes_to_pixmap(
     *,
-    dexpi_model: DexpiModel,
-    output_path: str | Path,
-    padding: float = 0.0,
-    pretty_formatting: bool = False,
-    add_background_box: bool = False,
-    create_output_directory: bool = False,
-) -> Path:
-    """Render a DEXPI P&ID model as SVG data and save it to a file."""
-    output_path = _resolve_output_filepath(
-        filepath=output_path,
-        output_format="svg",
-        create_output_directory=create_output_directory,
-    )
-    drawer = _create_pid_drawer(
-        dexpi_model=dexpi_model,
-        padding=padding,
-        pretty_formatting=pretty_formatting,
-    )
+    pdf_bytes: bytes,
+    resolution_scaling_factor: int = Field(
+        default=1,
+        ge=1,
+        le=2,
+    ),
+) -> tuple[pymupdf.Pixmap, ...]:
+    with pymupdf.open(stream=pdf_bytes, filetype="pdf") as doc:  # type: ignore[no-untyped-call]
+        num_pages = len(doc)
+        pix_maps = []
 
-    saved_path = drawer.save_svg(
-        object_name=output_path.stem,
-        filepath=str(output_path),
-        background=add_background_box,
-    )
+        for page_num in range(num_pages):
+            page = doc.load_page(page_num)
+            scaling_matrix = pymupdf.Matrix(  # type: ignore[no-untyped-call]
+                resolution_scaling_factor, resolution_scaling_factor
+            )
+            pix = page.get_pixmap(matrix=scaling_matrix)
+            pix_maps.append(pix)
 
-    return Path(saved_path)
-
-
-def save_svg_bytes_to_svg(
-    svg_bytes: bytes,
-    output_path: str | Path,
-    *,
-    create_output_directory: bool = False,
-) -> Path:
-    """SVG data to an SVG file."""
-    output_path = _resolve_output_filepath(
-        filepath=output_path,
-        output_format="svg",
-        create_output_directory=create_output_directory,
-    )
-
-    output_path.write_bytes(svg_bytes)
-
-    return output_path
-
-
-def save_svg_bytes_to_pdf(
-    svg_bytes: bytes,
-    output_path: str | Path,
-    *,
-    page_size: PageSize = "A4",
-    orientation: PageOrientation = "landscape",
-    create_output_directory: bool = False,
-) -> Path:
-    """Convert SVG data to PDF and save it to a file."""
-    output_path = _resolve_output_filepath(
-        filepath=output_path,
-        output_format="pdf",
-        create_output_directory=create_output_directory,
-    )
-
-    html_content = _wrap_svg_bytes_into_html(
-        svg_bytes=svg_bytes,
-        page_size=page_size,
-        orientation=orientation,
-    )
-    html_document = HTML(string=html_content)
-    html_document.write_pdf(output_path)
-
-    return output_path
+        return tuple(pix_maps)

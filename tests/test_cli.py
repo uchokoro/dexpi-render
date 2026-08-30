@@ -27,6 +27,10 @@ def test_main_successful_export(
                 "A3",
                 "--orientation",
                 "portrait",
+                "--resolution-scale",
+                "1",
+                "--jpg-quality",
+                "100",
                 "--pretty",
                 "--background",
                 "--create-dir",
@@ -45,6 +49,8 @@ def test_main_successful_export(
         page_size="A3",
         orientation="portrait",
         create_output_directory=True,
+        resolution_scaling_factor=1,
+        jpg_quality_factor=100,
     )
 
     captured = capsys.readouterr()
