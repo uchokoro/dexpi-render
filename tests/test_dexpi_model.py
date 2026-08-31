@@ -16,11 +16,6 @@ from dexpi_pid_renderer.dexpi_model import (
 )
 
 
-@pytest.fixture
-def mock_dexpi_model() -> MagicMock:
-    return MagicMock(spec=DexpiModel)
-
-
 class TestLoadDexpiModel:
     def test_invalid_filepath_type(self) -> None:
         invalid_path: Any = 123
