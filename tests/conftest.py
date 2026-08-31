@@ -4,6 +4,8 @@ from unittest.mock import MagicMock
 import pytest
 from pydexpi.dexpi_classes.dexpiModel import DexpiModel
 
+from dexpi_pid_renderer import DexpiModelProvider
+
 
 @pytest.fixture
 def sample_xml(tmp_path: Path) -> Path:
@@ -19,3 +21,13 @@ def mock_dexpi_model() -> MagicMock:
     model = MagicMock(spec=DexpiModel)
     model.diagram = MagicMock()
     return model
+
+
+@pytest.fixture
+def mock_dexpi_model_provider(
+    mock_dexpi_model: MagicMock,
+) -> MagicMock:
+    """Create a mock DexpiModelProvider with a mock DEXPI model."""
+    provider = MagicMock(spec=DexpiModelProvider)
+    provider.get.return_value = mock_dexpi_model
+    return provider
