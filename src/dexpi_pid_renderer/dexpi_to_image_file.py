@@ -113,7 +113,7 @@ def save_pdf_bytes_to_jpg(
     output_paths: list[Path] = []
 
     for i, pix_map in enumerate(selected_pixmaps):
-        page_filename = f"{filename}_{i}{extension}"
+        page_filename = f"{filename}_{i + start_page}{extension}"
         filepath = file_dir / page_filename
         pix_map.save(filename=filepath, jpg_quality=jpg_quality_factor)  # type: ignore[no-untyped-call]
         output_paths.append(filepath)
@@ -159,7 +159,7 @@ def save_pdf_bytes_to_png(
     output_paths: list[Path] = []
 
     for i, pix_map in enumerate(selected_pixmaps):
-        page_filename = f"{filename}_{i}{extension}"
+        page_filename = f"{filename}_{i + start_page}{extension}"
         filepath = file_dir / page_filename
         pix_map.save(filename=filepath)  # type: ignore[no-untyped-call]
         output_paths.append(filepath)
