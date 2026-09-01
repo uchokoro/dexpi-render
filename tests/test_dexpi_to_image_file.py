@@ -173,18 +173,21 @@ class TestSavePdfBytesToJpg:
             mock_pixmap_3,
         )
 
+        start_page = 1
+        end_page = 2
+
         result = save_pdf_bytes_to_jpg(
             pdf_bytes=pdf_bytes,
             output_path=output_path,
             resolution_scaling_factor=1,
             jpg_quality_factor=80,
-            start_page=1,
-            end_page=2,
+            start_page=start_page,
+            end_page=end_page,
         )
 
         expected_paths = (
-            tmp_path / "drawing_0.jpg",
-            tmp_path / "drawing_1.jpg",
+            tmp_path / f"drawing_{start_page}.jpg",
+            tmp_path / f"drawing_{start_page + 1}.jpg",
         )
 
         assert result == expected_paths
@@ -270,16 +273,19 @@ class TestSavePdfBytesToPng:
             mock_pixmap_3,
         )
 
+        start_page = 1
+        end_page = 2
+
         result = save_pdf_bytes_to_png(
             pdf_bytes=pdf_bytes,
             output_path=output_path,
-            start_page=1,
-            end_page=2,
+            start_page=start_page,
+            end_page=end_page,
         )
 
         expected_paths = (
-            tmp_path / "drawing_0.png",
-            tmp_path / "drawing_1.png",
+            tmp_path / f"drawing_{start_page}.png",
+            tmp_path / f"drawing_{start_page + 1}.png",
         )
 
         assert result == expected_paths
