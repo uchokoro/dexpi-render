@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from pydantic import Field, validate_call
 from pydexpi.dexpi_classes.dexpiModel import DexpiModel
@@ -175,7 +174,6 @@ def save_pid_as_svg(
     pretty_formatting: bool = False,
     add_background_box: bool = False,
     create_output_directory: bool = False,
-    **_kwargs: Any,
 ) -> Path:
     """Render a DEXPI P&ID model as SVG data, and save it to an SVG file."""
     svg_bytes = render_pid_as_svg(
@@ -202,7 +200,6 @@ def save_pid_as_pdf(
     create_output_directory: bool = False,
     page_size: PageSize = "A4",
     orientation: PageOrientation = "landscape",
-    **_kwargs: Any,
 ) -> Path:
     """Render a DEXPI P&ID model as SVG data, and save it to a PDF file."""
     svg_bytes = render_pid_as_svg(
@@ -243,7 +240,6 @@ def save_pid_as_jpg(
     ),
     start_page: int = 0,
     end_page: int = 0,
-    **_kwargs: Any,
 ) -> Path | tuple[Path, ...]:
     """Render a DEXPI P&ID model as SVG data, and save it to a JPG/JPEG file."""
     svg_bytes = render_pid_as_svg(
@@ -286,7 +282,6 @@ def save_pid_as_png(
     ),
     start_page: int = 0,
     end_page: int = 0,
-    **_kwargs: Any,
 ) -> Path | tuple[Path, ...]:
     """Render a DEXPI P&ID model as SVG data, and save it to a PNG file."""
     svg_bytes = render_pid_as_svg(

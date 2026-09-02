@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from inspect import signature
 from pathlib import Path
+from typing import Any
 
 from .dexpi_model import DexpiModelProvider
 from .dexpi_to_image_file import (
@@ -15,13 +18,23 @@ from .pid_rendering import (
     PageSize,
 )
 
-FORMAT_TO_SAVER_MAP = {
+FormatSaver = Callable[..., Any]
+
+FORMAT_TO_SAVER_MAP: dict[DrawingOutputFormat, FormatSaver] = {
     "jpeg": save_pid_as_jpg,
     "jpg": save_pid_as_jpg,
     "pdf": save_pid_as_pdf,
     "png": save_pid_as_png,
     "svg": save_pid_as_svg,
 }
+
+
+def _filter_saver_arguments(
+    saver: FormatSaver,
+    arguments: dict[str, Any],
+) -> dict[str, Any]:
+    parameters = signature(saver).parameters
+    return {name: value for name, value in arguments.items() if name in parameters}
 
 
 def export_dexpi_to_drawing_file(
@@ -47,6 +60,7 @@ def export_dexpi_to_drawing_file(
     dexpi_model = provider.get(filepath=filepath)
 
     saver = FORMAT_TO_SAVER_MAP.get(output_format)
+
     if saver is None:
         raise ValueError(f"Unsupported drawing output format: {output_format!r}")
 
@@ -62,5 +76,7 @@ def export_dexpi_to_drawing_file(
         "jpg_quality_factor": jpg_quality_factor,
         "create_output_directory": create_output_directory,
     }
+    filtered_arguments = _filter_saver_arguments(saver, call_arguments)
+    saved_filepaths: Path | tuple[Path, ...] = saver(**filtered_arguments)
 
-    return saver(**call_arguments)
+    return saved_filepaths
