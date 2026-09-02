@@ -1,0 +1,101 @@
+name: Publish Package to PyPI
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  # -------------------------------------------------------------
+  # Job 1: Build Source Distribution and Wheel
+  # -------------------------------------------------------------
+  build:
+    name: Build package distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tool
+        run: python -m pip install build --user
+
+      - name: Build sdist and wheel
+        run: python -m build
+
+      - name: Store distribution artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+  # -------------------------------------------------------------
+  # Job 2: Publish to TestPyPI & Test Installation
+  # -------------------------------------------------------------
+  publish-to-testpypi:
+    name: Publish to TestPyPI & Verify
+    needs: build
+    # Only run on push of a tag that contains '-rc'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && contains(github.ref, '-rc')
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/dexpi-pid-renderer
+    permissions:
+      id-token: write # Mandatory for OIDC authentication
+
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Upload to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
+      - name: Set up Python for Smoke Testing
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install and verify package from TestPyPI
+        run: |
+          # Wait 10 seconds for TestPyPI index update
+          sleep 10
+          pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple dexpi-pid-renderer
+          dexpi-render --help
+
+  # -------------------------------------------------------------
+  # Job 3: Publish to Production PyPI
+  # -------------------------------------------------------------
+  publish-to-pypi:
+    name: Publish to Production PyPI
+    needs: build
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/dexpi-pid-renderer
+    permissions:
+      id-token: write # Mandatory for OIDC authentication
+
+    steps:
+      - name: Download distribution artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Upload to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
