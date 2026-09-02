@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dexpi-pid-renderer"
-version = "0.1.0"
-description = "Render DEXPI P&ID models as SVG and PDF drawings."
+version = "0.2.0-rc1"
+description = "Render and export DEXPI P&ID models as SVG, PDF, JPG/JPEG, and PNG drawings."
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
